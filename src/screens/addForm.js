@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const AddForm = ({route}) => {
   const navigation = useNavigation();
-  const {id, dept} = route
+  const {id, dept, email} = route
   const [dataTo, setDataTo] = useState([])
   const [dataLocation, setDataLocation] = useState([])
   const [dataCategory, setDataCategory] = useState([])
@@ -26,6 +26,7 @@ const AddForm = ({route}) => {
   const [priority, setPriority] = useState("");
   const [message, setMessage] = useState("");
   const [photo, setPhoto] = useState("");
+  const [dataImage, setDataImage] = useState("");
 
   const loadData = async () => {
     try {
@@ -50,6 +51,29 @@ const AddForm = ({route}) => {
     loadData()
   },[])
 
+  const handleCameraLaunch = () => {
+    const options = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+    };
+  
+    launchCamera(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled camera');
+      } else if (response.error) {
+        console.log('Camera Error: ', response.error);
+      } else {
+        let imageUri = response.uri || response.assets?.[0]?.uri;
+        //setSelectedImage(imageUri);
+        console.log(response, imageUri);
+        setPhoto(response.assets[0])
+        setDataImage(response.assets[0].uri)
+      }
+    });
+  }
+
   const handleImagePick = async () => {
     const options = {
       mediaType: 'photo'
@@ -59,21 +83,37 @@ const AddForm = ({route}) => {
     const result = await launchImageLibrary(options);
 
     console.log(result)
-    setPhoto(result.assets[0].uri)
+    setPhoto(result.assets[0])
+    setDataImage(result.assets[0].uri)
   }
 
   const handleSubmit = async () => {
     const data = new FormData() 
+    const API_URL_SERVER = `https://emshotels.net/myapi/readprofile.php?id=${id}&email=${email}`
+    const res = await axios.get(API_URL_SERVER)
+    const name = res.data[0].nama
     data.append('location', location)
     data.append('woto', woto)
     data.append('category', category)
     data.append('priority', priority)
     data.append('message', message)
-    data.append('photo', photo)
+    data.append('photo', photo.fileName)
+    data.append('orderBy', name)
     data.append('id', id)
     data.append('dept', dept)
     const response = await axios.post(`https://emshotels.net/myapi/postWO.php`, data)
     console.log('r',response, data)
+
+    const data2 = new FormData() 
+    data2.append('sendimage', {uri: photo.uri,name: photo.fileName,type: photo.type})
+    const response2 = await axios({
+      method: "post",
+      url: "https://emshotels.net/myapi/api-file-upload.php",
+      data: data2,
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+
+    console.log('r',response2, data2)
     if (response.data.status === 'SUCCESS') {
       Alert.alert('Success', 'success', [
         {text: 'OK', onPress: () => {
@@ -139,9 +179,9 @@ const AddForm = ({route}) => {
                 </FormControl>
                 <FormControl>
                   {photo == "" ? (
-                    <Button bg="gray.400" onPress={handleImagePick}>Upload Image</Button>
+                    <Button bg="gray.400" onPress={handleCameraLaunch}>Upload Image</Button>
                     ):(
-                      <Image source={{uri:photo}} alt={photo} size={20}/>
+                      <Image source={{uri:photo.uri}} alt={photo.uri} size={20}/>
                     )
                   }
                 </FormControl>
