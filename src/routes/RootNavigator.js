@@ -8,6 +8,7 @@ import home from '../screens/home';
 import login from '../screens/login';
 import TabNavigator from './TabNavigator';
 import Profile from '../screens/profile';
+import CameraScreen from '../screens/camera';
 
 const RootNavigator = props => {
   const Stack = createNativeStackNavigator();
@@ -18,6 +19,7 @@ const RootNavigator = props => {
         <Stack.Screen name='Login' component={login} />
         <Stack.Screen name='Hometab' component={TabNavigator} />
         <Stack.Screen name='Profile' component={Profile} />
+        <Stack.Screen name='Camera' component={CameraScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
